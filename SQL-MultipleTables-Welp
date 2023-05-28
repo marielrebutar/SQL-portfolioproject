@@ -1,0 +1,56 @@
+SELECT *
+FROM places;
+SELECT *
+FROM reviews;
+
+--If each dollar sign ($) represents $10, how could you find all places that cost $20 or less?
+SELECT *
+FROM places
+WHERE price_point = '$$' 
+  OR price_point = '$';
+
+--What columns can be used to JOIN these two tables?
+SELECT *
+FROM places
+INNER JOIN reviews
+  ON places.id = reviews.place_id;
+
+--Modify your previous query to select only the most important columns in order
+SELECT places.name, places.average_rating, reviews.username, reviews.rating, reviews.review_date, reviews.note
+FROM places
+INNER JOIN reviews
+  ON places.id = reviews.place_id;
+
+--How are the results of this query different? Would this or the INNER JOIN be more useful for a log of reviews?
+--this has some null values, not a lot but since we are looking for only reviews, INNER JOIN is a better query
+SELECT places.name, places.average_rating, reviews.username, reviews.rating, reviews.review_date, reviews.note
+FROM places
+LEFT JOIN reviews
+  ON places.id = reviews.place_id;
+
+--Write a query to find all the ids of places that currently do not have any reviews in our reviews table.
+SELECT places.id
+FROM places
+  LEFT JOIN reviews
+  ON places.id = reviews.place_id
+WHERE reviews.place_id IS NULL;
+
+--Select reviews only from 2020
+WITH reviews_2020 AS (
+  SELECT *
+  FROM reviews
+  WHERE strftime('%Y', review_date) = '2020'
+)
+SELECT *
+FROM places
+JOIN reviews_2020
+  ON places.id = reviews_2020.place_id;
+
+--Businesses want to be on the lookout for …ahem… difficult reviewers. Write a query that finds the reviewer with the most reviews that are BELOW the average rating for places.
+SELECT username, COUNT(*)
+FROM reviews
+WHERE rating < (SELECT AVG(rating)
+  FROM reviews)
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 5;
