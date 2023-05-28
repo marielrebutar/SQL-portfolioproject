@@ -1,0 +1,147 @@
+SELECT *
+FROM employees
+LIMIT 3;
+SELECT *
+FROM projects
+LIMIT 3;
+
+--What are the names of employees who have not chosen a project?
+SELECT first_name, last_name
+FROM employees
+WHERE current_project IS NULL;
+
+--What are the names of projects that were not chosen by any employees?
+SELECT project_name
+FROM projects
+WHERE project_id NOT IN (
+  SELECT current_project 
+  FROM employees
+  WHERE current_project IS NOT NULL
+);
+
+--What is the name of the project chosen by the most employees?
+SELECT project_name
+FROM projects
+INNER JOIN employees
+  ON projects.project_id = employees.current_project
+WHERE current_project IS NOT NULL
+GROUP BY project_name
+ORDER BY COUNT(employee_id) DESC
+LIMIT 1;
+
+--Which projects were chosen by multiple employees?
+SELECT project_name, COUNT(*)
+FROM projects
+INNER JOIN employees
+  ON projects.project_id = employees.current_project
+WHERE current_project IS NOT NULL
+GROUP BY current_project
+HAVING COUNT(current_project) > 1;
+
+--Each project needs at least 2 developers. How many available project positions are there for developers? Do we have enough developers to fill the needed positions?
+SELECT (COUNT(*) * 2) - (
+  SELECT COUNT(*)
+  FROM employees
+  WHERE current_project IS NOT NULL
+    AND position = 'Developer') AS 'Count'
+FROM projects;
+
+--Which personality is the most common across our employees?
+SELECT personality, COUNT(personality)
+FROM employees
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 1;
+
+--What are the names of projects chosen by employees with the most common personality type?
+SELECT project_name
+FROM projects
+JOIN employees
+  ON employees.current_project = projects.project_id
+WHERE employees.personality = (
+   SELECT personality
+   FROM employees
+   GROUP BY personality
+   ORDER BY COUNT(personality) DESC
+   LIMIT 1);
+
+--Find the personality type most represented by employees with a selected project.
+SELECT employees.personality, employees.first_name, employees.last_name, project_name
+FROM employees
+INNER JOIN projects
+  ON employees.current_project = projects.project_id
+WHERE employees.personality = (
+   SELECT personality
+   FROM employees
+   WHERE current_project IS NOT NULL
+   GROUP BY personality
+   ORDER BY COUNT(personality) DESC
+   LIMIT 1);
+
+--For each employee, provide their name, personality, the names of any projects they’ve chosen, and the number of incompatible co-workers.
+SELECT first_name, last_name, personality, project_name,
+CASE
+  WHEN personality = 'INFP'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('ISFP', 'ESFP', 'ISTP', 'ESTP', 'ISFJ', 'ESFJ', 'ISTJ', 'ESTJ'))
+
+  WHEN personality = 'ENFP'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('ISFP', 'ESFP', 'ISTP', 'ESTP', 'ISFJ', 'ESFJ', 'ISTJ', 'ESTJ'))
+
+WHEN personality = 'INFJ'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('ISFP', 'ESFP', 'ISTP', 'ESTP', 'ISFJ', 'ESFJ', 'ISTJ', 'ESTJ'))
+
+WHEN personality = 'ENFJ'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('ESFP', 'ISTP', 'ESTP', 'ISFJ', 'ESFJ', 'ISTJ', 'ESTJ'))
+
+WHEN personality = 'ISFP'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ'))
+  
+WHEN personality = 'ESFP'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+
+WHEN personality = 'ISTP'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+
+WHEN personality = 'ESTP'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+
+WHEN personality = 'ISFJ'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+
+WHEN personality = 'ESFJ'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+
+WHEN personality = 'ISTJ'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+
+WHEN personality = 'ESTJ'
+    THEN (SELECT COUNT(*)
+      FROM employees
+      WHERE personality IN ('INFP', 'ENFP', 'INFJ', 'ENFJ'))
+  ELSE 0
+END AS 'Incompatibles'
+FROM employees
+LEFT JOIN projects
+  ON employees.current_project = projects.project_id;
