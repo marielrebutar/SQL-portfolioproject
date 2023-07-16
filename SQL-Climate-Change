@@ -1,0 +1,54 @@
+SELECT state, year, tempc,
+  AVG(tempc) OVER (
+    PARTITION BY state
+  ) AS 'running_avg_temp'
+FROM state_climate
+ORDER BY year;
+
+SELECT state, year, tempc, 
+  FIRST_VALUE(tempc) OVER (
+    PARTITION BY state
+    ORDER BY tempc
+  ) AS 'lowest_temp'
+  FROM state_climate ;
+
+  SELECT state, year, tempc, 
+  LAST_VALUE(tempc) OVER (
+    PARTITION BY state
+    ORDER BY tempc
+         RANGE BETWEEN 
+            UNBOUNDED PRECEDING AND 
+            UNBOUNDED FOLLOWING
+  ) AS 'highest_temp'
+  FROM state_climate ;
+
+SELECT state, year, tempc,
+  tempc - LAG (tempc, 1, tempc) OVER (
+      PARTITION BY state
+      ORDER BY year
+   ) AS 'change_in_temp'
+  FROM state_climate
+  ORDER BY change_in_temp DESC;
+
+SELECT state, year, tempc, 
+ RANK() OVER (
+   PARTITION BY state
+   ORDER BY tempc DESC
+ ) AS 'warmest_rank'
+ FROM state_climate;
+
+
+ SELECT NTILE(4) OVER (
+      PARTITION BY state
+      ORDER BY tempc ASC
+   ) AS 'quartile', 
+   year, state, tempc
+   FROM state_climate;
+
+
+   SELECT NTILE(5) OVER (
+      ORDER BY tempc DESC
+   ) AS 'quintile', 
+   year, state, tempc
+   FROM state_climate;
+
